@@ -1,5 +1,9 @@
+require('dotenv').config()
 const connection = require('../config/db')
 const {getAllUsers}= require('../services/CRUDServics')
+const jwt = require('jsonwebtoken')
+
+
 const getHomepage = async (req,res)=>{
     try{   
         let results = await getAllUsers();
@@ -32,11 +36,23 @@ const postCreatUser = async (req,res) =>{
     {
         console.error(error);
         res.status(500).send('Internal Server Error');
-    }
-
-    
+    } 
 }
 
+const login = (req,res)=>{
+    const data = req.body;
+    const accessToken =  jwt.sign(data,process.env.ACCESS_TOKEN_SECRET,{expiresIn:'30s'})
+    res.json({accessToken})
+}
+function authenToken(req,res,next) {
+    const authorizationHeader = req.headers['authorization'];
+    // Beaer [token]'
+    const token = authorizationHeader.split(' ')[1];
+    if (!token) res.sendStatus(401);
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,data)=>{
+        console.log(err,data);
+    })
+} 
 module.exports ={
-    getHomepage,getCreateUsers,postCreatUser
+    getHomepage,getCreateUsers,postCreatUser,login,authenToken
 }
